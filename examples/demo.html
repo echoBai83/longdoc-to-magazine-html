@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打印 / PDF 跨页完美控制｜长文档转杂志风 HTML 官方示例</title>
+<meta name="description" content="longdoc-to-magazine-html 技能官方示例：A4 打印分页控制的完整实践。">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+    --primary: #103399;
+    --gold: #C8A666;
+    --bg-color: #F6F4EF;
+    --white: #ffffff;
+    --border-color: #E2DDD3;
+    --text-main: #1a1a1a;
+    --text-light: #555555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: "Noto Sans SC", "Source Han Sans SC", "思源黑体", "PingFang SC", sans-serif;
+    line-height: 1.6;
+}
+
+.container { max-width: 1000px; margin: 0 auto; padding: 60px 40px 100px; }
+
+/* ===================== 页面头部 ===================== */
+.masthead {
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 32px;
+    margin-bottom: 60px;
+}
+.eyebrow {
+    font-size: 0.85rem;
+    letter-spacing: 0.24em;
+    color: var(--gold);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+}
+.masthead h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    color: var(--primary);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    margin-bottom: 20px;
+}
+.masthead .standfirst {
+    font-size: 1.15rem;
+    color: var(--text-light);
+    max-width: 46em;
+}
+.masthead .meta {
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+}
+.masthead .meta strong { color: var(--primary); font-weight: 700; }
+
+/* ===================== 章节标题 ===================== */
+section { margin-bottom: 70px; }
+.section-no {
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    margin-bottom: 10px;
+}
+h2 {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--primary);
+    line-height: 1.25;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 32px 0 14px;
+}
+p { margin-bottom: 18px; }
+p code, li code, td code {
+    background: rgba(16, 51, 153, 0.07);
+    color: var(--primary);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+/* ===================== 1. 表格 ===================== */
+.table-wrapper {
+    width: 100%;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+    margin-bottom: 30px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th, td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    text-align: left;
+}
+th {
+    background-color: var(--primary);
+    color: var(--white);
+    font-weight: 700;
+    word-break: keep-all;
+}
+td { word-break: break-word; overflow-wrap: anywhere; }
+tbody tr:nth-child(even) { background-color: #faf9f6; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* ===================== 2. 多栏阅读 ===================== */
+.layout-columns {
+    column-count: 2;
+    column-gap: 40px;
+    column-fill: balance;
+    margin-bottom: 40px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 30px;
+}
+.layout-columns p { margin-top: 0; color: var(--text-light); text-align: justify; }
+.layout-columns p::first-letter {
+    font-size: 3.5rem;
+    float: left;
+    line-height: 1;
+    margin-right: 8px;
+    color: var(--primary);
+    font-weight: 900;
+}
+
+/* ===================== 3. 拉引语录 ===================== */
+.layout-pullquote {
+    text-align: center;
+    margin: 50px 0;
+    position: relative;
+    padding: 0 40px;
+}
+.layout-pullquote::before {
+    content: "\201C";
+    font-size: 8rem;
+    color: var(--gold);
+    opacity: 0.3;
+    position: absolute;
+    top: -40px;
+    left: 0;
+    font-family: serif;
+}
+.layout-pullquote blockquote {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.4;
+    margin: 0;
+}
+.layout-pullquote cite {
+    display: block;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--gold);
+    font-weight: 700;
+    font-style: normal;
+    letter-spacing: 0.1em;
+}
+
+/* ===================== 4. 全宽分屏 ===================== */
+.layout-split {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 40px;
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.split-img {
+    flex: 1;
+    background: var(--primary);
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--white);
+}
+.split-img .split-glyph {
+    font-size: 4.5rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--gold);
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+.split-text {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.split-text h3 { margin-top: 0; }
+.split-text p:last-child { margin-bottom: 0; }
+
+/* ===================== 5. 大数字列表 ===================== */
+.layout-index { margin-bottom: 40px; }
+.layout-index-item {
+    display: flex;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border-color);
+    padding: 24px 0;
+}
+.layout-index-item:last-child { border-bottom: none; }
+.index-num {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+    min-width: 120px;
+    flex-shrink: 0;
+    font-family: sans-serif;
+}
+.index-body h3 { margin: 0 0 8px; }
+.index-body p { margin-bottom: 0; color: var(--text-light); }
+
+/* ===================== 6. 侧边旁注 ===================== */
+.layout-sidebar-note {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 32px;
+    margin-bottom: 40px;
+    align-items: start;
+}
+.layout-sidebar-note .note-side {
+    color: var(--gold);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    border-left: 2px solid var(--gold);
+    padding-left: 14px;
+}
+.layout-sidebar-note .note-main { color: var(--text-main); }
+.layout-sidebar-note .note-main p:last-child { margin-bottom: 0; }
+
+/* ===================== 7. 图片与图注 ===================== */
+figure { margin: 30px 0; }
+figure img { width: 100%; max-width: 100%; height: auto; border-radius: 8px; }
+figcaption {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-align: center;
+    font-style: italic;
+}
+
+/* ===================== 8. 卡片 ===================== */
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.card {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 8px;
+    border-top: 3px solid var(--primary);
+}
+.card-gold { border-top-color: var(--gold); }
+.card h3 { margin: 0 0 12px; font-size: 1.05rem; }
+.card p { margin-bottom: 0; color: var(--text-light); font-size: 0.95rem; }
+.card ul { margin: 0; padding-left: 0; list-style: none; }
+.card ul li {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    padding: 7px 0 7px 24px;
+    position: relative;
+    border-bottom: 1px dashed var(--border-color);
+}
+.card ul li:last-child { border-bottom: none; }
+.card ul li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 15px;
+    width: 8px;
+    height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+}
+
+/* ===================== 代码块 ===================== */
+pre {
+    background: #101828;
+    color: #e6edf3;
+    padding: 24px 26px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 30px;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+
+/* ===================== 页面页脚 ===================== */
+.page-footer {
+    border-top: 3px solid var(--primary);
+    padding-top: 28px;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    justify-content: space-between;
+}
+
+/* ===================== 屏幕端打印提示条 ===================== */
+.print-hint {
+    background: var(--primary);
+    color: var(--white);
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+}
+.print-hint kbd {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-family: inherit;
+    font-size: 0.92em;
+}
+
+/* ===================== 移动端响应式 768px 以下 ===================== */
+@media (max-width: 768px) {
+    .container { padding: 20px 16px 40px; }
+    .layout-columns { column-count: 1 !important; }
+    .layout-split { display: block !important; }
+    .layout-split .split-img, .layout-split .split-text { flex: none; width: 100%; }
+    .layout-sidebar-note { grid-template-columns: 1fr !important; }
+    .layout-index-item { flex-wrap: wrap; }
+    .index-num { min-width: auto; font-size: 2.5rem; margin-bottom: 8px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .layout-pullquote { padding: 0 20px; }
+    .layout-pullquote blockquote { font-size: 1.35rem; }
+}
+
+/* ===================== 打印 / PDF 跨页完美控制 ===================== */
+@media print {
+    @page { size: A4; margin: 12mm; }
+
+    body {
+        background-color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-size: 11pt !important;
+    }
+    .container { padding: 0 !important; max-width: 100% !important; }
+
+    /* 屏幕专用元素不进纸 */
+    .print-hint { display: none !important; }
+
+    /* 大区块允许自然跨页 */
+    section, .table-wrapper, .layout-columns {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    /* 细粒度元素防截断 */
+    tr, h2, h3, .card, .layout-index-item, .layout-split, figure, .layout-sidebar-note {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* 表头跨页自动重复，标题不吊底 */
+    thead { display: table-header-group; }
+    h2, h3 { page-break-after: avoid; break-after: avoid; }
+
+    /* 尝试抑制孤行孤字（浏览器存在兼容差异） */
+    p { orphans: 3; widows: 3; }
+
+    /* 打印字号覆盖 */
+    h1 { font-size: 32pt !important; }
+    h2 { font-size: 20pt !important; margin-top: 20px !important; margin-bottom: 15px !important; }
+    h3 { font-size: 14pt !important; margin-top: 15px !important; margin-bottom: 10px !important; }
+    section { margin-bottom: 30px !important; }
+    th, td { padding: 8px 12px !important; word-break: break-word !important; overflow-wrap: break-word !important; }
+
+    pre { font-size: 8pt; line-height: 1.5; padding: 14px 16px; break-inside: avoid; }
+
+    /* ========== 布局打印降级补丁 ========== */
+    .layout-columns { column-count: 1 !important; }
+
+    .layout-split { display: block !important; }
+    .layout-split .split-img,
+    .layout-split .split-text { flex: none; width: 100%; }
+    .layout-split .split-img { min-height: 0; padding: 24px; }
+
+    .layout-pullquote::before {
+        font-size: 2rem !important;
+        position: relative !important;
+        top: auto;
+        left: auto;
+    }
+
+    .layout-columns p::first-letter {
+        font-size: inherit !important;
+        float: none !important;
+        margin-right: 0 !important;
+        color: inherit !important;
+        font-weight: inherit !important;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="print-hint">
+示例页 · 按 <kbd>Ctrl</kbd> + <kbd>P</kbd>（macOS：<kbd>⌘</kbd> + <kbd>P</kbd>）即可预览 A4 分页效果 · 此提示条不会出现在打印稿中
+</div>
+
+<div class="container">
+
+    <header class="masthead">
+        <div class="eyebrow">Longdoc to Magazine HTML · Official Demo</div>
+        <h1>打印 / PDF<br>跨页完美控制</h1>
+        <p class="standfirst">
+            一份关于纸张的排版契约：哪里可以断开，哪里绝不能断开，以及当浏览器不肯配合时，我们如何用 CSS 强制它服从。
+        </p>
+        <div class="meta">
+            <span><strong>示例来源</strong> 技能规范第三章</span>
+            <span><strong>版本</strong> V2.2 封板生产版</span>
+            <span><strong>纸张</strong> A4 · 12mm 页边距</span>
+        </div>
+    </header>
+
+    <!-- 01 -->
+    <section>
+        <div class="section-no">01 / CORE PRINCIPLE</div>
+        <h2>核心原则</h2>
+
+        <div class="layout-columns">
+            <p>大区块允许跨页，细粒度元素防截断。这条原则解决的是排版里两个互相拉扯的诉求：如果所有区块都禁止跨页，页面底部会堆出大量无法填充的空白；如果所有区块都允许跨页，一张卡片、一段语录就可能被撕成两半，横跨两张纸。</p>
+            <p>正确的做法是按元素粒度分级授权——容器体积大、内部可再分，允许它们自然跨页；而一旦断开就会破坏阅读连贯性的元素，必须整体锁定在单页内。下面这张表记录了当前版本的分级策略。</p>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>元素 / 选择器</th>
+                        <th>分页策略</th>
+                        <th>设定理由</th>
+                        <th>违规后果</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>section</code></td>
+                        <td>允许跨页 <code>break-inside: auto</code></td>
+                        <td>章节体量大，内部段落与卡片可自然承接</td>
+                        <td>强制不跨页会在大章节前留下整页空白</td>
+                    </tr>
+                    <tr>
+                        <td><code>.table-wrapper</code></td>
+                        <td>允许跨页</td>
+                        <td>配合 <code>thead</code> 重复表头，长表格可延续</td>
+                        <td>长表格被挤到下一页，前半页大面积留白</td>
+                    </tr>
+                    <tr>
+                        <td><code>.layout-columns</code></td>
+                        <td>允许跨页</td>
+                        <td>打印态已强制降级为单栏，跨页即普通段落流</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td><code>tr</code></td>
+                        <td>禁止跨页 <code>break-inside: avoid</code></td>
+                        <td>单行数据被撕开会丢失对应关系</td>
+                        <td>金额与项目名分处两页，产生误读</td>
+                    </tr>
+                    <tr>
+                        <td><code>h2</code> / <code>h3</code></td>
+                        <td>禁止跨页 + <code>break-after: avoid</code></td>
+                        <td>标题必须与后续正文同页</td>
+                        <td>标题孤悬页底，正文全部跑到下页</td>
+                    </tr>
+                    <tr>
+                        <td><code>.card</code></td>
+                        <td>禁止跨页</td>
+                        <td>卡片是信息自足单元</td>
+                        <td>卡片边框被切开，视觉残缺</td>
+                    </tr>
+                    <tr>
+                        <td><code>.layout-index-item</code></td>
+                        <td>禁止跨页</td>
+                        <td>大数字与说明文字必须成对</td>
+                        <td>序号在上一页、释义在下一页</td>
+                    </tr>
+                    <tr>
+                        <td><code>figure</code></td>
+                        <td>禁止跨页</td>
+                        <td>图片与图注不可分离</td>
+                        <td>图注与图片错页，注释失去指向</td>
+                    </tr>
+                    <tr>
+                        <td><code>.layout-split</code></td>
+                        <td>禁止跨页</td>
+                        <td>分屏图文对照必须同框</td>
+                        <td>左右两栏被分页割裂成上下两页</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 02 -->
+    <section>
+        <div class="section-no">02 / BROWSER REALITY</div>
+        <h2>浏览器兼容现实</h2>
+
+        <p><code>orphans</code> 与 <code>widows</code> 是控制孤行孤字的两个属性：<code>orphans</code> 约束页面底部的段落最少保留几行，<code>widows</code> 约束页面顶部的段落最少承接几行。Firefox 对这两个属性支持完善，Chrome / Chromium 的支持则相当有限。</p>
+
+        <p>这意味着不能把它们当作确定性保证。它们是排版优化手段，能改善平均表现，但<strong>不能保证 100% 消除孤行</strong>。在交付文档中如此声明，比承诺「绝对不会出现孤行」更诚实。</p>
+
+        <div class="layout-pullquote">
+            <blockquote>兼容性声明是交付质量的一部分。承诺确定的结果却做不到，比提前说明边界更伤害信任。</blockquote>
+            <cite>技能规范 · 第三章</cite>
+        </div>
+
+        <pre><code>@media print {
+    p { orphans: 3; widows: 3; }
+}</code></pre>
+    </section>
+
+    <!-- 03 -->
+    <section>
+        <div class="section-no">03 / PRINT DOWNGRADE</div>
+        <h2>打印态强制降级补丁</h2>
+
+        <p>Web 端为了视觉张力使用了双栏、分屏、超大引号和首字下沉。这些手法在屏幕上成立，在纸上会逐个失效：双栏在 A4 窄幅下每栏只剩约 90mm，中文阅读节奏被打碎；分屏的 flex 布局在分页时无法优雅断开；8rem 的巨型引号会被页边距裁切；首字下沉依赖 <code>float</code>，一旦落在分页线附近就会引发整块内容错位。</p>
+
+        <div class="layout-index">
+            <div class="layout-index-item">
+                <div class="index-num">01</div>
+                <div class="index-body">
+                    <h3>双栏回归单栏</h3>
+                    <p><code>.layout-columns</code> 强制 <code>column-count: 1</code>，把横向阅读改回纵向，避免窄栏内中文断行过密。</p>
+                </div>
+            </div>
+            <div class="layout-index-item">
+                <div class="index-num">02</div>
+                <div class="index-body">
+                    <h3>分屏转上下流式</h3>
+                    <p><code>.layout-split</code> 改为 <code>display: block</code>，子元素宽度 100%，左右对照变为上下承接。</p>
+                </div>
+            </div>
+            <div class="layout-index-item">
+                <div class="index-num">03</div>
+                <div class="index-body">
+                    <h3>巨型引号缩位</h3>
+                    <p><code>.layout-pullquote::before</code> 降到 2rem 并改为相对定位，避免被页边距裁切。</p>
+                </div>
+            </div>
+            <div class="layout-index-item">
+                <div class="index-num">04</div>
+                <div class="index-body">
+                    <h3>关闭首字下沉</h3>
+                    <p><code>.layout-columns p::first-letter</code> 恢复继承字号、取消 <code>float</code>，彻底规避分页撕裂。</p>
+                </div>
+            </div>
+        </div>
+
+        <pre><code>@media print {
+    .layout-columns { column-count: 1 !important; }
+
+    .layout-split { display: block !important; }
+    .layout-split .split-img,
+    .layout-split .split-text { flex: none; width: 100%; }
+
+    .layout-pullquote::before {
+        font-size: 2rem !important;
+        position: relative !important;
+        top: auto;
+        left: auto;
+    }
+
+    .layout-columns p::first-letter {
+        font-size: inherit !important;
+        float: none !important;
+        margin-right: 0 !important;
+        color: inherit !important;
+        font-weight: inherit !important;
+    }
+}</code></pre>
+    </section>
+
+    <!-- 04 -->
+    <section>
+        <div class="section-no">04 / WORD BREAKING</div>
+        <h2>表头断词：V2.2 的关键修复</h2>
+
+        <div class="layout-split">
+            <div class="split-img">
+                <div class="split-glyph">Pri<br>nt</div>
+            </div>
+            <div class="split-text">
+                <h3>从任意字符处断行</h3>
+                <p>旧版本在 <code>th</code> 和 <code>td</code> 上统一使用 <code>word-break: break-all</code>，浏览器为了填满单元格会从任意字符处断行，导致 <code>Print</code> 被切成 <code>Pri</code> 与 <code>nt</code>，<code>A4-PDF</code> 被切成 <code>A4-P</code> 与 <code>DF</code>。</p>
+                <p>这不是审美问题，而是信息识别问题——表头被切断后，读者需要重新拼读才能确认列含义。</p>
+            </div>
+        </div>
+
+        <p>修复方案是按元素分流：<code>th</code> 表头通常只有短词组，使用 <code>word-break: keep-all</code> 保持词组完整；<code>td</code> 单元格可能包含长 URL 或长英文串，使用 <code>word-break: break-word</code> 配合 <code>overflow-wrap: anywhere</code>，只在必要时断行，且不切断单词中间的字符。</p>
+
+        <div class="layout-sidebar-note">
+            <div class="note-side">V2.2 变更记录</div>
+            <div class="note-main">
+                <p>表头断词分流是本版本唯一影响渲染结果的 CSS 改动。它不改变视觉风格，只修正断行策略，属于无感升级。分页分级策略自 V1.0 起保持稳定，未做调整。</p>
+            </div>
+        </div>
+
+        <pre><code>th { word-break: keep-all; }
+td { word-break: break-word; overflow-wrap: anywhere; }</code></pre>
+    </section>
+
+    <!-- 05 -->
+    <section>
+        <div class="section-no">05 / COLOR FIDELITY</div>
+        <h2>颜色保真与完整样式块</h2>
+
+        <p>以下为可直接投入生产的完整打印样式块。注意 <code>-webkit-print-color-adjust: exact</code> 与 <code>print-color-adjust: exact</code> 必须同时声明，否则 Chrome 会丢弃深蓝表头与香槟金强调色，打印出灰白文档。</p>
+
+        <pre><code>@media print {
+    @page { size: A4; margin: 12mm; }
+
+    body {
+        background-color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-size: 11pt !important;
+    }
+
+    .container { padding: 0 !important; max-width: 100% !important; }
+
+    section, .table-wrapper, .layout-columns {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    tr, h2, h3, .card, .layout-index-item,
+    .layout-split, figure, .layout-sidebar-note {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    thead { display: table-header-group; }
+    h2, h3 { page-break-after: avoid; break-after: avoid; }
+    p { orphans: 3; widows: 3; }
+
+    h1 { font-size: 32pt !important; }
+    h2 { font-size: 20pt !important; }
+    h3 { font-size: 14pt !important; }
+}</code></pre>
+
+        <figure>
+            <div class="table-wrapper" style="margin-bottom:0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>角色</th>
+                            <th>色值</th>
+                            <th>打印态表现</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>主色 深蓝</td><td><code>#103399</code></td><td>表头底色、标题，需 <code>exact</code> 保真</td></tr>
+                        <tr><td>辅色 香槟金</td><td><code>#C8A666</code></td><td>序号、旁注、引号，需 <code>exact</code> 保真</td></tr>
+                        <tr><td>背景 暖米</td><td><code>#F6F4EF</code></td><td>打印态强制转白，节省墨量</td></tr>
+                        <tr><td>正文 近黑</td><td><code>#1a1a1a</code></td><td>激光打印保持锐利</td></tr>
+                        <tr><td>辅助文字</td><td><code>#555555</code></td><td>双栏正文，灰度可辨</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <figcaption>图 1　配色角色与打印态表现对照。前两项依赖 <code>print-color-adjust: exact</code>，缺失则整份文档退化为灰白。</figcaption>
+        </figure>
+    </section>
+
+    <!-- 06 -->
+    <section>
+        <div class="section-no">06 / PRE-DELIVERY CHECK</div>
+        <h2>交付前自检</h2>
+
+        <p>按顺序核对以下七项，任何一项不通过都不得交付：</p>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>分页分级</h3>
+                <ul>
+                    <li>大区块允许跨页</li>
+                    <li>细粒度元素全部锁定 <code>break-inside: avoid</code></li>
+                </ul>
+            </div>
+            <div class="card card-gold">
+                <h3>表格延续</h3>
+                <ul>
+                    <li><code>thead</code> 声明 <code>display: table-header-group</code></li>
+                    <li>长表格跨页重复表头</li>
+                </ul>
+            </div>
+            <div class="card card-gold">
+                <h3>标题不孤悬</h3>
+                <ul>
+                    <li><code>h2</code> / <code>h3</code> 设置 <code>break-after: avoid</code></li>
+                    <li>标题与正文保持同页</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>降级补丁</h3>
+                <ul>
+                    <li>四个补丁全部写入打印媒体查询</li>
+                    <li>双栏、分屏、引号、首字下沉</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>断词策略</h3>
+                <ul>
+                    <li><code>th</code> 使用 <code>keep-all</code></li>
+                    <li><code>td</code> 使用 <code>break-word</code> + <code>anywhere</code></li>
+                </ul>
+            </div>
+            <div class="card card-gold">
+                <h3>颜色保真</h3>
+                <ul>
+                    <li><code>print-color-adjust: exact</code> 双前缀声明</li>
+                    <li>深蓝与香槟金不丢色</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>响应式覆盖</h3>
+                <ul>
+                    <li><code>@media (max-width: 768px)</code> 已写</li>
+                    <li>覆盖双栏、分屏、旁注、网格四类布局</li>
+                </ul>
+            </div>
+            <div class="card card-gold">
+                <h3>离线兜底</h3>
+                <ul>
+                    <li>内网交付移除字体 CDN</li>
+                    <li>图片输出 base64 占位标签</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="layout-pullquote">
+            <blockquote>自检的价值不在于清单本身，而在于它把「我觉得没问题」换成「我逐条验证过」。</blockquote>
+            <cite>技能规范 · 第六章</cite>
+        </div>
+    </section>
+
+    <!-- 07 -->
+    <section>
+        <div class="section-no">07 / VERSION</div>
+        <h2>版本说明</h2>
+
+        <p>本示例内容对应 <code>longdoc-to-magazine-html</code> V2.2 封板生产版。打印分页策略自 V1.0 起保持稳定，V2.2 的主要变更集中在表头断词分流与移动端响应式补全。</p>
+
+        <p>完整技能规范请返回仓库根目录阅读 <code>SKILL.md</code>；可直接投喂给 AI 的执行 Prompt 位于 <code>skills/longdoc-to-magazine-html/references/prompt.md</code>。</p>
+    </section>
+
+    <footer class="page-footer">
+        <span>longdoc-to-magazine-html · V2.2.0</span>
+        <span>MIT License · 字体 Noto Sans SC 遵循 SIL OFL</span>
+    </footer>
+
+</div>
+
+</body>
+</html>

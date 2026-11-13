@@ -1,0 +1,27 @@
+{
+  "name": "magazine-html-typeset",
+  "owner": {
+    "name": "echoBai83"
+  },
+  "metadata": {
+    "description": "长文档转杂志风 HTML：网页预览 + A4 打印直出 PDF，零遗漏保真排版。",
+    "version": "2.2.0"
+  },
+  "plugins": [
+    {
+      "name": "magazine-html-typeset",
+      "source": "./",
+      "description": "把长文档（粘贴文本 / PDF / Word / Markdown）转成单文件杂志风 HTML，同时满足浏览器预览与 A4 打印另存 PDF。核心保证：零遗漏保留原文、打印分页不撕裂、内网离线可交付。",
+      "version": "2.2.0",
+      "license": "MIT",
+      "keywords": [
+        "html",
+        "print-css",
+        "pdf-export",
+        "typesetting",
+        "chinese",
+        "long-document"
+      ]
+    }
+  ]
+}
